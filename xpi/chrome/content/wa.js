@@ -273,17 +273,26 @@ webannotator.main = {
      */
     buildPopups: function (dtdFileName) {
         var body = content.document.body;
-        // main elements
-        var dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-main-menu", style:"display:none;"},
-                                ""], document);
-        body.appendChild(dom);
+        
+        var dom;
+		// main elements
+		var mainMenuElement = content.document.getElementById("webannotator-main-menu");
+        if (mainMenuElement == null) {
+			dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-main-menu", style:"display:none;"}, ""], document);
+			body.appendChild(dom);
+		}
 
         // secondary elements
-        dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-sec-menu", style:"display:none;"},
-                            ""], document);
-        body.appendChild(dom);
+		var secMenuElement = content.document.getElementById("webannotator-sec-menu");
+        if (secMenuElement == null) {
+			dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-sec-menu", style:"display:none;"},
+												""], document);
+			body.appendChild(dom);
+		}
         // edit popup
-        dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-edit-menu",
+		var editMenuElement = content.document.getElementById("webannotator-edit-menu");
+        if (editMenuElement == null) {
+			dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-edit-menu",
                                     style:"font-family:arial;z-index:11001;position:absolute;display:none;background-color:white;",
                                     onmouseover:function(e) { webannotator.htmlWA.retainEditAnnotationMenu(); return false;},
                                     onmouseout:function(e) { webannotator.htmlWA.hideEditAnnotationMenu(); return false;}
@@ -296,7 +305,8 @@ webannotator.main = {
                             ]
                            ],
                            document);
-        body.appendChild(dom);
+			body.appendChild(dom);
+		}
         webannotator.main.initVarMenu(dtdFileName);
         webannotator.isOpen = false;
     },
@@ -652,7 +662,7 @@ webannotator.main = {
         }
         else {
             webannotator.main.writeSchemasFile();
-            webannotator.main.createJSON();
+            webannotator.createJSON();
             return;
         }
 
@@ -735,7 +745,7 @@ webannotator.main = {
             }
 
             if (json.length) {
-                webannotator.colors = JSON.parse(json);
+				webannotator.colors = JSON.parse(json);
             }
             cstream.close();
             inputStream.close();
@@ -943,7 +953,7 @@ webannotator.main = {
                 if (typeof(webannotator.colors) != 'undefined' && webannotator.colors[fileName]) {
                     delete webannotator.colors[fileName];
                 }
-                webannotator.main.createJSON();
+				webannotator.main.createJSON();
 
                 // Rewrite the file containing the list
                 // of annotation schemas
@@ -1217,19 +1227,21 @@ webannotator.main = {
                             webannotator.schemas.push(newSchema);
                             webannotator.currentSchemaId = webannotator.schemas.length - 1;
                         }
-                        webannotator.main.createJSON();
-                        webannotator.main.createCSS();
+						webannotator.main.createCSS();
+						webannotator.main.createJSON();
                         webannotator.main.writeSchemasFile();
                         webannotator.main.updateMenus(true, true);
                         // If no session has not begun yet
                         // propose to begin one
                         if (!webannotator.session) {
                             ok = confirm(webannotator.bundle.GetStringFromName("waDTDLoadedConfirm"));
-                            webannotator.main.activate();
-                            webannotator.main.showDTDOptionsDialog();
                             if (!ok) {
                                 webannotator.main.deactivate();
                             }
+							else{
+								webannotator.main.activate();
+								webannotator.main.showDTDOptionsDialog();
+							}
 
                         }
                         // if a session has already begun
@@ -1449,7 +1461,7 @@ webannotator.main = {
                 createInstance(Components.interfaces.nsIFileOutputStream);
             ostream.init(file, 2, 0x200, false);
             ostream.write(jsonElements, jsonElements.length);
-            ostream.close();
+			ostream.close();
         }
         catch (ex) {
             alert("ERROR: Failed to write file: " + file.path);

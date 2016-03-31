@@ -61,15 +61,34 @@ webannotator.titleAnnotation = {
         var titlePopupTagName = "div";
         var titlePopupAtts = {
            id: "webannotator-title-edit-popup",
-           style: "font-family:arial;z-index:11000;position:fixed;color:#333;background:#fff;margin:0 auto;width:30%;left:0;right:0;top:10px;box-shadow:0 0 1em b    lack;border:2px solid blue;padding:0.5em;display:none;"
+           style: "font-family:arial;z-index:11000;position:fixed;color:#333;background:#fff;margin:0 auto;width:30%;right:0;top:100px;box-shadow:0 0 1em b    lack;border:2px solid blue;padding:0.5em;display:none;overflow:auto;max-height:100px;"
         };
-
+		
+		var titlePopupMoverTagName = "div";
+        var titlePopupMoverAtts = {
+           id: "webannotator-title-edit-mover-popup",
+           style: "background:green;width:5px;left:0;top:0;border:2px solid green;height:5px;position:absolute;",
+		   ondblclick:function(e) {
+			    var title = content.document.getElementById("webannotator-title-edit-popup");
+			    var position = title.style.position;
+			    if (position == "fixed") {
+				   title.style.position="";
+				   title.style.width="";
+				}
+				else {
+					title.style.position="fixed";
+					title.style.width="30%";
+				}
+				}
+        };
         // waTitle should be true when there is <wa-title> html element in the page.
         // It is the case when you're editing annotation of an already annotated page.
         // Instead of creating a popup with page title contents you need to create a
         // popup with wa-title contents; it may contain annotation span elements.
         if (waTitle) {
             titlePopup = webannotator.misc.jsonToDOM([titlePopupTagName, titlePopupAtts, ""], doc);
+			titlePopupMover = webannotator.misc.jsonToDOM([titlePopupMoverTagName, titlePopupMoverAtts, ""], doc);
+			titlePopup.appendChild(titlePopupMover);
             while(title.firstChild){
                 titlePopup.appendChild(title.firstChild);
             }
@@ -77,9 +96,11 @@ webannotator.titleAnnotation = {
             webannotator.titleAnnotation.removeWAtitleElems();
         } else {
             titlePopup = webannotator.misc.jsonToDOM([titlePopupTagName, titlePopupAtts, title.innerHTML], doc);
+			titlePopupMover = webannotator.misc.jsonToDOM([titlePopupMoverTagName, titlePopupMoverAtts, ""], doc);
+			titlePopup.appendChild(titlePopupMover);
         }
 
-        doc.body.appendChild(titlePopup);
+        doc.body.insertBefore(titlePopup, doc.body.firstChild);
         return titlePopup;
     },
 
