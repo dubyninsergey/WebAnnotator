@@ -1,5 +1,7 @@
 // See license.txt for terms of usage
 
+
+
 // namespace
 if (typeof webannotator == "undefined") {
     var webannotator = {};
@@ -233,10 +235,17 @@ webannotator.main = {
         var body = content.document.body;
 
         // Add element for communication between HTML and XUL
-        var dom = webannotator.misc.jsonToDOM(["WA_data_element", {id:"WA_data_element", "WA-maxid":""+webannotator.maxId},
-                                           ""], content.document);
-        webannotator.main.setModified(false);
-        content.document.documentElement.appendChild(dom);
+		var waDataElement = content.document.getElementById("WA_data_element");
+		while (waDataElement != null) {
+			waDataElement.parentNode.removeChild(waDataElement);
+			waDataElement = content.document.getElementById("WA_data_element");
+		}
+		waDataElement = webannotator.misc.jsonToDOM(["WA_data_element", {id:"WA_data_element", "WA-maxid":""+webannotator.maxId},
+													""], content.document);
+		content.document.documentElement.appendChild(waDataElement);
+		waDataElement.setAttribute("WA-maxid", ""+webannotator.maxId)
+		
+		webannotator.main.setModified(false);
         // building the panels
         webannotator.main.buildPopups(webannotator.dtdFileName);
 
@@ -277,36 +286,46 @@ webannotator.main = {
         var dom;
 		// main elements
 		var mainMenuElement = content.document.getElementById("webannotator-main-menu");
-        if (mainMenuElement == null) {
-			dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-main-menu", style:"display:none;"}, ""], document);
-			body.appendChild(dom);
+        while (mainMenuElement != null) {
+			mainMenuElement.parentNode.removeChild(mainMenuElement);
+			mainMenuElement = content.document.getElementById("webannotator-main-menu");
 		}
-
+		dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-main-menu", style:"display:none;"}, ""], document);
+		body.appendChild(dom);
+		
         // secondary elements
 		var secMenuElement = content.document.getElementById("webannotator-sec-menu");
-        if (secMenuElement == null) {
-			dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-sec-menu", style:"display:none;"},
-												""], document);
-			body.appendChild(dom);
+		while (secMenuElement != null) {
+			secMenuElement.parentNode.removeChild(secMenuElement);
+			secMenuElement = content.document.getElementById("webannotator-sec-menu");
 		}
+		
+		dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-sec-menu", style:"display:none;"},
+												""], document);
+		body.appendChild(dom);
+		
         // edit popup
 		var editMenuElement = content.document.getElementById("webannotator-edit-menu");
-        if (editMenuElement == null) {
-			dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-edit-menu",
-                                    style:"font-family:arial;z-index:11001;position:absolute;display:none;background-color:white;",
-                                    onmouseover:function(e) { webannotator.htmlWA.retainEditAnnotationMenu(); return false;},
-                                    onmouseout:function(e) { webannotator.htmlWA.hideEditAnnotationMenu(); return false;}
-												  },
-                            [
-                                ["img", {onclick:function(e) { webannotator.popups.hide_popup("webannotator-edit-menu"); webannotator.main.receiveDeleteAnnotation(); return false;},
-                                         src:'chrome://webannotator/skin/suppr.png'}, ""],
-                                ["img", {onclick:function(e) { webannotator.popups.hide_popup("webannotator-edit-menu"); webannotator.htmlWA.receiveWindowEditAnnotation(e); return false;},
-                                         src:'chrome://webannotator/skin/edit.png'}, ""]
-                            ]
-                           ],
-                           document);
-			body.appendChild(dom);
+		while (editMenuElement != null) {
+			editMenuElement.parentNode.removeChild(editMenuElement);
+			editMenuElement = content.document.getElementById("webannotator-edit-menu");
 		}
+        
+		dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-edit-menu",
+								style:"font-family:arial;z-index:11001;position:absolute;display:none;background-color:white;",
+								onmouseover:function(e) { webannotator.htmlWA.retainEditAnnotationMenu(); return false;},
+								onmouseout:function(e) { webannotator.htmlWA.hideEditAnnotationMenu(); return false;}
+											  },
+						[
+							["img", {onclick:function(e) { webannotator.popups.hide_popup("webannotator-edit-menu"); webannotator.main.receiveDeleteAnnotation(); return false;},
+									 src:'chrome://webannotator/skin/suppr.png'}, ""],
+							["img", {onclick:function(e) { webannotator.popups.hide_popup("webannotator-edit-menu"); webannotator.htmlWA.receiveWindowEditAnnotation(e); return false;},
+									 src:'chrome://webannotator/skin/edit.png'}, ""]
+						]
+					   ],
+					   document);
+		body.appendChild(dom);
+		
         webannotator.main.initVarMenu(dtdFileName);
         webannotator.isOpen = false;
     },
