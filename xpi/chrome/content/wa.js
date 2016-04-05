@@ -154,6 +154,7 @@ webannotator.main = {
         // if a schema has been selected
         if (webannotator.dtdFileName != "") {
             // Build annotations from WA spans in loaded document
+            webannotator.htmlWA.receiveWindowSwitchLinks(content.document, false, false);
             webannotator.main.buildAnnotations();
             webannotator.main.activateHTMLDocument();
 
@@ -558,6 +559,7 @@ webannotator.main = {
         }
 
         // Confirm
+        webannotator.htmlWA.receiveWindowSwitchLinks(content.document, false, true);
         webannotator.session = false;
         webannotator.main.showWAPanel(false);
 
