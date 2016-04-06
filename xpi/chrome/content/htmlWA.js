@@ -145,12 +145,15 @@ webannotator.htmlWA = {
 
     /**
      * Create a new annotation or edit the currently selected one
-     * Called by editing popup menus.
+     * Called by editing popup menus;
+     * In case of new annotation recursively find the same text and annotate it as SUGGEST
      */
-    action: function (sectionName) {
+    action: function (sectionName, suggestParent) {
         // If an id has been selected for edition, then
         // this is not a new annotation, but an old one
         // tha must be updated
+        var selected_text = "";
+        var new_annotation = false;
 
         if (webannotator.htmlWA.getIdToEdit() !== null) {
             var subtypes = "";
@@ -194,26 +197,99 @@ webannotator.htmlWA = {
             webannotator.WAid = Math.max(webannotator.WAid, parseInt(element.getAttribute("WA-maxid"))) + 1;
             aAttributes["class"] = "WebAnnotator_" + sectionName;
             aAttributes["wa-type"] = sectionName;
-            aAttributes["WA-id"] = ""+webannotator.WAid;
+            aAttributes["WA-id"] = String(webannotator.WAid);
             // subtype
             subtypes = "";
-            for (subtype in webannotator.attributesOptions) {
-                subtypes += subtype + ":" + webannotator.attributesOptions[subtype] + ";";
+            
+            if (!suggestParent){
+                color = webannotator.htmlWA.getColorFromNode(sectionName);
+                aAttributes["style"] = "color:" + color[0] + "; background-color:" + color[1] + ";";
+                for (subtype in webannotator.attributesOptions) {
+                    subtypes += subtype + ":" + webannotator.attributesOptions[subtype] + ";";
+                }
             }
+            // If it is SUGGEST
+            else {
+                aAttributes["style"] = 'border:2px solid black;';
+                aAttributes["wa-suggest-parent-id"] = String(suggestParent["id"]);
+                aAttributes["wa-suggest-parent-type"] = suggestParent["type"];
+                aAttributes["wa-suggest-parent-subtypes"] = suggestParent["subtypes"];
+            }
+            
             aAttributes["wa-subtypes"] = subtypes;
-            color = webannotator.htmlWA.getColorFromNode(sectionName);
-            aAttributes["style"] = "color:" + color[0] + "; background-color:" + color[1] + ";";
 
             // Highlight (from Scrapbook)
             sbHighlighter.set(webannotator.aSelection, aAttributes);
 
             // Update the bottom panel
             webannotator.main.receiveNewAnnotation(webannotator.WAid, sectionName, webannotator.aSelection.text, subtypes);
+
+            //For find same text on page and create SUGGEST annotations
+            selected_text = webannotator.aSelection.text;
+            new_annotation = true;
+
         }
         // Close edit menu
         webannotator.htmlWA.closeMenu();
+        // Annotate all same text as SUGGEST
+        if (new_annotation){
+            if (selected_text !== ""){
+                found_other_text = webannotator.htmlWA.selectText(selected_text)
+                if (found_other_text){
+                    webannotator.aSelection = webannotator.htmlWA.getSelectedText();
+                    
+                    if (!suggestParent){
+                        suggestParent = {};
+                        suggestParent["id"] = webannotator.WAid
+                        suggestParent["type"] = sectionName
+                        suggestParent["subtypes"] = subtypes
+                    }
+                    webannotator.htmlWA.action("SUGGEST", suggestParent);
+                }
+            }
+        }
     },
+    
+    /**
+     * Finds and selects first occurence of text in the body
+     */
+    selectText: function(text) {
+        if (content.document.createNodeIterator && content.document.createTreeWalker){
+            elems = content.document.createNodeIterator(
+                content.document.body,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+                );
+            while((elem = elems.nextNode()) != null){
+                var value = elem.textContent;
+                if (~value.indexOf(text) && !elem.parentNode.hasAttribute("WA-id")) {
+                    if (content.document.createRange) {
+                        var rng = content.document.createRange();
+                        rng.setStart(elem, value.indexOf(text));
+                        rng.setEnd(elem, value.indexOf(text) + text.length);
+                        sel = content.window.getSelection();
+                        sel.removeAllRanges();
+                        sel.addRange(rng);
+                        return true;
+                    } else{
+                      //alert("Can't create range");
+                      return false;
+                    }
+                } else{
+                    //alert('Совпадений не найдено');
+                }
+            }
 
+            //alert('No matches!');
+            return false;
+        }
+        else {
+            //alert("Can't iterate!")
+            return false;
+        }
+    },
+    
     /**
      * Reset attribute values
      */

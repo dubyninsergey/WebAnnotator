@@ -1637,13 +1637,54 @@ webannotator.main = {
     runSaveAs: function(){
         var filename = webannotator.main.suggestFilename();
         var title = webannotator.bundle.GetStringFromName("waSaveAnnotation");
+        if (webannotator.main.checkSuggests()){
+            alert("Can't save because you should mark suggested objects first!!!")
+            return;
+        }
         webannotator.main.startSaveAsDialog(filename, title, function(file){
             webannotator.main.setFileNumberFromFilename(file.path);
+            webannotator.main.deleteRejectedSuggests();
             webannotator.main.saveAnnotations(file.path);
             webannotator.lastSaveFile = file.path;
             webannotator.main.activateMenuItem("WebAnnotator_b_saveMenu");
             webannotator.main.activateMenuItem("WebAnnotator_t_saveasMenu");
         });
+    },
+    
+    /**
+     * Find suggests and scroll to first one
+     */
+    checkSuggests: function(){
+        var body = content.document.body;
+        var spans = body.getElementsByTagName("span");
+        var i;
+        for(i = 0; i < spans.length ; i++) {
+            var span = spans[i];
+            if (span.getAttribute("wa-type") == "SUGGEST"){
+                span.scrollIntoView();
+                return true;
+            }
+        }
+        return false;
+    },
+    
+    /**
+     * Delete tag of underlined text with WA-id : id
+     */
+    deleteRejectedSuggests: function () {
+        var htmlDocument = content.document;
+        var spans = htmlDocument.getElementsByTagName("span");
+        var i;
+        for(i = spans.length -1; i >= 0 ; i--) {
+            var span = spans[i];
+            if (span.getAttribute("wa-type") == "REJECTED_SUGGEST"){
+                var fragment = document.createDocumentFragment();
+                while (span.firstChild) {
+                    fragment.appendChild(span.firstChild);
+                }
+                span.parentNode.replaceChild(fragment, span);
+            }
+        }
     },
 
     /**
@@ -2037,11 +2078,20 @@ webannotator.main = {
         for(i = spans.length -1; i >= 0 ; i--) {
             var span = spans[i];
             if(span.getAttribute("WA-id") == id) {
-                var fragment = document.createDocumentFragment();
-                while (span.firstChild) {
-                    fragment.appendChild(span.firstChild);
+                if (span.getAttribute("wa-type") != "SUGGEST"){
+                    var fragment = document.createDocumentFragment();
+                    while (span.firstChild) {
+                        fragment.appendChild(span.firstChild);
+                    }
+                    span.parentNode.replaceChild(fragment, span);
                 }
-                span.parentNode.replaceChild(fragment, span);
+                else {
+                    span.setAttribute("wa-type", "REJECTED_SUGGEST");
+                    span.setAttribute("style", "");
+                    span.removeEventListener("mouseover", webannotator.main.showEdit);
+                    span.removeEventListener("mouseout", webannotator.main.hideEdit);
+                    
+                }
             }
         }
     },
