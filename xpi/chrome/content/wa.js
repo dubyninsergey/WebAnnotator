@@ -1686,6 +1686,20 @@ webannotator.main = {
             }
         }
     },
+    
+    /**
+     * Move title popup annotations to title and delete title popup
+     */
+    moveTitlePopupAnnotationsToTitle: function(doc){
+        initdoc = doc || content.document;
+        doc = initdoc.cloneNode(true)
+        var titlePopup = doc.getElementById("webannotator-title-edit-popup");
+        var mover = doc.getElementById("webannotator-title-edit-mover-popup");
+        mover.remove()
+        titlePopupText = titlePopup.innerHTML;
+        initdoc.getElementsByTagName("title")[0].firstChild.remove()
+        initdoc.getElementsByTagName("title")[0].insertAdjacentHTML('afterbegin', titlePopupText);
+    },
 
     /**
      * "Export as..." handler
@@ -1770,7 +1784,11 @@ webannotator.main = {
         var saveClone = content.document.cloneNode(true);
 
         // add WA-html title element and remove title annotation popup from HTML
+        webannotator.main.moveTitlePopupAnnotationsToTitle(saveClone);
+        
         webannotator.titleAnnotation.createWAtitleElemFromPopup(saveClone);
+        
+        
 
         // Activate links
         if (webannotator.prefs.getBoolPref("activatelinks")) {
