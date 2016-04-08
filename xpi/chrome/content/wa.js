@@ -1697,8 +1697,12 @@ webannotator.main = {
         var mover = doc.getElementById("webannotator-title-edit-mover-popup");
         mover.remove()
         titlePopupText = titlePopup.innerHTML;
-        initdoc.getElementsByTagName("title")[0].firstChild.remove()
-        initdoc.getElementsByTagName("title")[0].insertAdjacentHTML('afterbegin', titlePopupText);
+        title = initdoc.getElementsByTagName("title")[0];
+        title.firstChild.remove();
+//        initdoc.getElementsByTagName("title")[0].innerHTML = titlePopupText;
+        while(titlePopup.firstChild){
+                title.appendChild(titlePopup.firstChild);
+            }
     },
 
     /**
