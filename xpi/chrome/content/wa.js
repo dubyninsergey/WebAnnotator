@@ -287,7 +287,7 @@ webannotator.main = {
         var dom;
 		// main elements
 		var mainMenuElement = content.document.getElementById("webannotator-main-menu");
-        while (mainMenuElement != null) {
+                while (mainMenuElement != null) {
 			mainMenuElement.parentNode.removeChild(mainMenuElement);
 			mainMenuElement = content.document.getElementById("webannotator-main-menu");
 		}
@@ -1643,7 +1643,6 @@ webannotator.main = {
         }
         webannotator.main.startSaveAsDialog(filename, title, function(file){
             webannotator.main.setFileNumberFromFilename(file.path);
-            webannotator.main.deleteRejectedSuggests();
             webannotator.main.saveAnnotations(file.path);
             webannotator.lastSaveFile = file.path;
             webannotator.main.activateMenuItem("WebAnnotator_b_saveMenu");
@@ -1671,8 +1670,8 @@ webannotator.main = {
     /**
      * Delete tag of underlined text with WA-id : id
      */
-    deleteRejectedSuggests: function () {
-        var htmlDocument = content.document;
+    deleteRejectedSuggests: function (doc) {
+        var htmlDocument = doc || content.document;
         var spans = htmlDocument.getElementsByTagName("span");
         var i;
         for(i = spans.length -1; i >= 0 ; i--) {
@@ -1790,7 +1789,17 @@ webannotator.main = {
         // add WA-html title element and remove title annotation popup from HTML
         webannotator.main.moveTitlePopupAnnotationsToTitle(saveClone);
         
-        webannotator.titleAnnotation.createWAtitleElemFromPopup(saveClone);
+        webannotator.main.deleteRejectedSuggests(saveClone);
+        
+        var colorNodes = saveClone.getElementsByTagName("WA-color");
+        // remove existing color items
+        while (colorNodes.length){
+            var htmlColorElement = colorNodes[0];
+            htmlColorElement.parentNode.removeChild(htmlColorElement);
+        }
+        
+        saveClone.getElementById("webannotator-title-edit-popup").remove();
+        //webannotator.titleAnnotation.createWAtitleElemFromPopup(saveClone);
         
         
 

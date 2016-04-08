@@ -100,7 +100,10 @@ webannotator.titleAnnotation = {
             // remove all WA-title elements because the can't coexist with popup
             webannotator.titleAnnotation.removeWAtitleElems();
         } else {
-            titlePopup = webannotator.misc.jsonToDOM([titlePopupTagName, titlePopupAtts, title.innerHTML], doc);
+            titlePopup = webannotator.misc.jsonToDOM([titlePopupTagName, titlePopupAtts, ""], doc);
+            str = title.innerHTML;
+            str = str.replace(new RegExp("&lt;", "g"), "<").replace(new RegExp("&gt;", "g"), ">");
+            titlePopup.innerHTML = str;
             titlePopupMover = webannotator.misc.jsonToDOM([titlePopupMoverTagName, titlePopupMoverAtts, ""], doc);
             titlePopup.appendChild(titlePopupMover);
         }
