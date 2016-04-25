@@ -61,14 +61,16 @@ webannotator.titleAnnotation = {
         var titlePopupTagName = "div";
         var titlePopupAtts = {
            id: "webannotator-title-edit-popup",
-           style: "font-family:arial;z-index:11000;position:fixed;color:#333;background:#fff;margin:0 auto;width:30%;right:0;top:100px;box-shadow:0 0 1em b    lack;border:2px solid blue;padding:0.5em;display:none;overflow:auto;max-height:100px;"
+           style: "border-style:ridge;padding:0;z-index:11000;position:fixed;color:#333;background:#fff;margin:0 auto;width:30%;right:0;top:100px;box-shadow:0 0 1em b    lack;border:2px solid blue;display:none;overflow:auto;max-height:100px;"
         };
 		
-        var titlePopupMoverTagName = "div";
+        var titlePopupMoverTagName = "input";
         var titlePopupMoverAtts = {
            id: "webannotator-title-edit-mover-popup",
-           style: "background:green;width:5px;left:0;top:0;border:2px solid green;height:5px;position:absolute;",
-		   ondblclick:function(e) {
+           type: "button",
+           value: "Move",
+           style: "left:0;top:0;padding:0;",
+		   onclick:function(e) {
 			    var title = content.document.getElementById("webannotator-title-edit-popup");
 			    var position = title.style.position;
 			    if (position == "fixed") {
@@ -96,7 +98,7 @@ webannotator.titleAnnotation = {
                 titlePopup.appendChild(title.firstChild);
             }
             titlePopupMover = webannotator.misc.jsonToDOM([titlePopupMoverTagName, titlePopupMoverAtts, ""], doc);
-            titlePopup.appendChild(titlePopupMover);
+            titlePopup.insertBefore(titlePopupMover, titlePopup.firstChild);
             // remove all WA-title elements because the can't coexist with popup
             webannotator.titleAnnotation.removeWAtitleElems();
         } else {
@@ -105,7 +107,7 @@ webannotator.titleAnnotation = {
             str = str.replace(new RegExp("&lt;", "g"), "<").replace(new RegExp("&gt;", "g"), ">");
             titlePopup.innerHTML = str;
             titlePopupMover = webannotator.misc.jsonToDOM([titlePopupMoverTagName, titlePopupMoverAtts, ""], doc);
-            titlePopup.appendChild(titlePopupMover);
+            titlePopup.insertBefore(titlePopupMover, titlePopup.firstChild);
         }
 
         doc.body.insertBefore(titlePopup, doc.body.firstChild);
@@ -113,11 +115,17 @@ webannotator.titleAnnotation = {
     },
 
     activateToolbarButton: function(){
-        document.getElementById('WebAnnotator_titleButton').classList.add('active');
+        WebAnnotator_titleButton = document.getElementById('WebAnnotator_titleButton')
+        if (WebAnnotator_titleButton !== null){
+                WebAnnotator_titleButton.classList.add('active');
+        }
     },
 
     deactivateToolbarButton: function(){
-        document.getElementById('WebAnnotator_titleButton').classList.remove('active');
+        WebAnnotator_titleButton = document.getElementById('WebAnnotator_titleButton')
+        if (WebAnnotator_titleButton !== null){
+                WebAnnotator_titleButton.classList.remove('active');
+        }
     },
 
     removeWAtitleElems: function(doc){

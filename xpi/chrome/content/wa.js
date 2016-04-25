@@ -104,12 +104,17 @@ webannotator.prefs = Components.classes["@mozilla.org/preferences-service;1"]
         .getService(Components.interfaces.nsIPrefService)
         .getBranch("extensions.webannotator.");
 
+webannotator.currentDTDId = null;
+
 // Add event listeners
 document.addEventListener("webannotator.optionsSet", function(e) { webannotator.main.receiveOptionsSet(); return false;}, false);
-document.addEventListener("webannotator.resetExtension", function(e) { webannotator.main.deactivate(); return false;}, false);
+document.addEventListener("webannotator.resetExtension",
+    function(e) {
+        webannotator.main.deactivate();
+        return false;
+    }, false);
 
 webannotator.main = {
-
     /**
      * A few string manipulation functions
      */
@@ -141,10 +146,13 @@ webannotator.main = {
      * Initialize the schema files
      */
     init: function (){
+//        alert("init");
         // Read the names of files
         webannotator.main.readSchemasFile();
         // Create elements in XUL button and menus
         setTimeout(function() {webannotator.main.createMenus(); }, 1000);
+//        webannotator.main.createMenus();
+        
     },
 
     /**
@@ -155,6 +163,39 @@ webannotator.main = {
         if (webannotator.dtdFileName != "") {
             // Build annotations from WA spans in loaded document
             webannotator.htmlWA.receiveWindowSwitchLinks(content.document, false, false);
+            
+            // if the user preference says that title popup
+            // should be shown, show it
+            if (webannotator.prefs.getBoolPref("showTitlePopup")){
+                webannotator.titleAnnotation.showPopup();
+                titlePopup = content.document.getElementById("webannotator-title-edit-popup");
+                if (titlePopup){
+                    annotator_navigation_div = content.document.getElementById("annotator_navigation_bar");
+                    if (annotator_navigation_div){
+                        annotator_navigation_div.appendChild(content.document.createElement("br"));
+                        annotator_navigation_div.insertBefore(titlePopup.firstChild,
+                                                              annotator_navigation_div.firstChild);
+//                        titlePopup.insertBefore(annotator_navigation_div,
+//                                                titlePopup.firstChild);
+                        titlePopupUp = content.document.createElement("div");
+                        titlePopupUp.setAttribute("id", "webannotator-title-edit-popup");
+                        titlePopupUp.setAttribute("style", "z-index:11000;position:fixed;color:#333;background:#fff;margin:0 auto;width:30%;right:0;top:100px;display:block;max-height:120px;");
+                        titlePopupUp.appendChild(annotator_navigation_div);
+                        titlePopupUp.appendChild(titlePopup);
+                        titlePopup.style.position = null;
+                        titlePopup.style.width = null;
+                        content.document.body.insertBefore(titlePopupUp, content.document.body.firstChild);
+                        
+                    }
+                }
+            }
+            // Otherwise hide it (if the file comes from a saved file
+            // with colors activated, then the title tag is already
+            // here and we want to hide it
+            else {
+                webannotator.titleAnnotation.hidePopup();
+            }
+            
             webannotator.main.buildAnnotations();
             webannotator.main.activateHTMLDocument();
 
@@ -194,20 +235,9 @@ webannotator.main = {
             // Show already existing annotation (if any)
             webannotator.main.receiveShowAnnotations();
 
-            // if the user preference says that title popup
-            // should be shown, show it
-            if (webannotator.prefs.getBoolPref("showTitlePopup")){
-                webannotator.titleAnnotation.showPopup();
-            }
-            // Otherwise hide it (if the file comes from a saved file
-            // with colors activated, then the title tag is already
-            // here and we want to hide it
-            else {
-                webannotator.titleAnnotation.hidePopup();
-            }
-
             // The page has not been modified yet
             webannotator.main.setModified(false);
+            
         }
         // If not schema has been selected (should not happen)
         else {
@@ -236,25 +266,43 @@ webannotator.main = {
         var body = content.document.body;
 
         // Add element for communication between HTML and XUL
-		var waDataElement = content.document.getElementById("WA_data_element");
-		while (waDataElement != null) {
-			waDataElement.parentNode.removeChild(waDataElement);
-			waDataElement = content.document.getElementById("WA_data_element");
-		}
-		waDataElement = webannotator.misc.jsonToDOM(["WA_data_element", {id:"WA_data_element", "WA-maxid":""+webannotator.maxId},
-													""], content.document);
-		content.document.documentElement.appendChild(waDataElement);
-		waDataElement.setAttribute("WA-maxid", ""+webannotator.maxId)
-		
-		webannotator.main.setModified(false);
+        var waDataElement = content.document.getElementById("WA_data_element");
+        while (waDataElement != null) {
+                waDataElement.parentNode.removeChild(waDataElement);
+                waDataElement = content.document.getElementById("WA_data_element");
+        }
+        waDataElement = webannotator.misc.jsonToDOM(["WA_data_element", {id:"WA_data_element", "WA-maxid":""+webannotator.maxId},
+                                                                                                ""], content.document);
+        content.document.documentElement.insertBefore(waDataElement, body);
+        waDataElement.setAttribute("WA-maxid", ""+webannotator.maxId)
+
+        webannotator.main.setModified(false);
         // building the panels
         webannotator.main.buildPopups(webannotator.dtdFileName);
 
         // event listeners cannot be registered for the onbeforeunload event with
         // the addEventListener and attachEvent methods
         // (only Safari and Google Chrome support it).
-        body.setAttribute("onbeforeunload",'var dataElement = document.getElementById("WA_data_element"); var modified = dataElement.getAttribute("modified"); var evt = document.createEvent("Events"); evt.initEvent("webannotator.resetExtension", true, true); dataElement.dispatchEvent(evt); modified = dataElement.getAttribute("modified"); if (modified == "true") {return ""; }');
-
+        //body.setAttribute("onbeforeunload",'var dataElement = document.getElementById("WA_data_element"); var modified = dataElement.getAttribute("modified"); var evt = document.createEvent("Events"); evt.initEvent("webannotator.resetExtension", true, true); dataElement.dispatchEvent(evt); modified = dataElement.getAttribute("modified"); if (modified == "true") {return ""; }');
+//        body.setAttribute("onbeforeunload",'var dataElement = document.getElementById("WA_data_element"); var modified = dataElement.getAttribute("modified"); var evt = document.createEvent("Events"); evt.initEvent("webannotator.resetExtension", true, true); dataElement.dispatchEvent(evt); modified = dataElement.getAttribute("modified"); if (modified == "true") {return ""; }');
+//        window.addEventListener("beforeunload", function(e){alert("0_unload")}, false);
+//        body.addEventListener("beforeunload", function(e){alert("1_unload")}, false);
+//        body.setAttribute("onbeforeunload", function(e){alert("2_unload")});
+        body.onbeforeunload = function(e) {webannotator.main.quit(e);};
+//        if (content.document.getElementById("next_button") !== null){
+//            content.document.getElementById("next_button").addEventListener("mouseup", function (e){
+//            if (webannotator.session) {
+//                webannotator.main.deactivate();
+//            }
+//            });
+//        }
+//        if (content.document.getElementById("prev_button") !== null){
+//            content.document.getElementById("prev_button").addEventListener("mouseup", function (e){
+//            if (webannotator.session) {
+//                webannotator.main.deactivate();
+//            }
+//            });
+//        }
         // All following tries did not work
 //		window.addEventListener("beforeunload", webannotator.main.quit, false);
 //		window.addEventListener("beforeunload", webannotator.main.quit, true);
@@ -271,11 +319,13 @@ webannotator.main = {
         var e = e || window.event;
         var dataElement = window.content.document.getElementById("WA_data_element");
         var modified = dataElement.getAttribute("modified");
-        var evt = window.content.document.createEvent("Events");
-        evt.initEvent("webannotator.resetExtension", true, true);
-        dataElement.dispatchEvent(evt);
-        modified = dataElement.getAttribute("modified");
-        if (modified == "true") {e.returnValue=""; return "";}
+        webannotator.main.setModified(modified == "true");
+        webannotator.main.deactivate();
+//        var evt = window.content.document.createEvent("Events");
+//        evt.initEvent("webannotator.resetExtension", true, true);
+//        dataElement.dispatchEvent(evt);
+//        modified = dataElement.getAttribute("modified");
+//        if (modified == "true") {e.returnValue=""; return "";}
     },
 
     /**
@@ -527,16 +577,16 @@ webannotator.main = {
     enableAddOn: function() {
         function enable(id){
             var elem = document.getElementById(id);
-            elem.disabled = false;
+            if (elem != null){
+                elem.disabled = false;
+            }
             return elem;
         }
         // Enable button
         var button = enable("WebAnnotator_button");
         button.style.listStyleImage = "url('chrome://webannotator/skin/wa_small_activated.png')";
-
         // Enable menu
         enable("WebAnnotator-menu");
-
         // Enable toolbar buttons
         enable("WebAnnotator_activeButton");
         if (webannotator.session){
@@ -550,14 +600,16 @@ webannotator.main = {
      */
     deactivate: function () {
         var r = true;
+        
         if (webannotator.modified) {
+//            alert(typeof webannotator.modified);
             // Display the dialogue to confirm whether delete or not
             r = confirm(webannotator.bundle.GetStringFromName("waDeactivateConfirm"));
         }
         if (!r){
             return;
         }
-
+        
         // Confirm
         webannotator.htmlWA.receiveWindowSwitchLinks(content.document, false, true);
         webannotator.session = false;
@@ -590,17 +642,17 @@ webannotator.main = {
 
         webannotator.main.deactivateMenuItem("WebAnnotator_saveasButton");
         webannotator.main.deactivateMenuItem("WebAnnotator_titleButton");
-
-        document.getElementById('WebAnnotator_activeButton').classList.remove("active");
+        var activeButton = document.getElementById('WebAnnotator_activeButton');
+            if (activeButton != null) {
+                document.getElementById('WebAnnotator_activeButton').classList.remove("active");
+            }
         webannotator.titleAnnotation.deactivateToolbarButton();
-
         window.content.location.reload();
         webannotator.linksEnable = true;
         // remove all event listeners
         webannotator.main.setModified(false);
         var container = gBrowser.tabContainer;
         container.removeEventListener("TabSelect", webannotator.main.tabSelect, false);
-
         webannotator.main.enableAddOn();
         webannotator.noLoad = true;
     },
@@ -1123,6 +1175,7 @@ webannotator.main = {
                     var schema = webannotator.schemas[i];
                     if (schema["lastused"] == 1 && !webannotator.session) {
                         setMenuActiveScheme(activateBtn, i, true);
+                        webannotator.currentDTDId = i;
                         lastUsedFound = 1;
                     }
                 }
@@ -1174,9 +1227,9 @@ webannotator.main = {
             }
             currentSchema["lastused"] = "1";
             webannotator.dtdFileName = currentSchema["filename"];
-
             webannotator.main.writeSchemasFile();
             webannotator.main.activate();
+//            window.content.document.body.addEventListener("unload", webannotator.main.deactivate());
             var element = window.content.document.getElementById("WA_data_element");
             element.setAttribute("schemaname", currentSchema["name"]);
             element.setAttribute("schemadesc", currentSchema["desc"]);
@@ -1694,7 +1747,9 @@ webannotator.main = {
         doc = initdoc.cloneNode(true)
         var titlePopup = doc.getElementById("webannotator-title-edit-popup");
         var mover = doc.getElementById("webannotator-title-edit-mover-popup");
-        mover.remove()
+        if (mover){
+            mover.remove()
+        }
         titlePopupText = titlePopup.innerHTML;
         title = initdoc.getElementsByTagName("title")[0];
         title.firstChild.remove();
@@ -2213,5 +2268,25 @@ webannotator.main = {
 
 
 // Set extension file path and read annotation schemas file
-document.onLoad = webannotator.main.init();
+//document.onLoad = webannotator.main.init();
 
+//document.addEventListener("DOMContentLoaded", webannotator.main.switchActivation, true);
+
+  // Add a callback to be run every time a document loads.
+  // note that this includes frames/iframes within the document
+
+
+
+gBrowser.addEventListener("load", function(e) {
+  webannotator.main.init();
+  if (gBrowser.contentDocument.getElementById("annotator_navigation_bar")){
+    if (!webannotator.session) {
+        
+        webannotator.main.chooseDTDFile(0, false);
+//        var dataElement = window.content.document.getElementById("WA_data_element");
+//        var modified = dataElement.getAttribute("modified");
+//        alert(modified);
+    }
+  }
+  },
+  true);
