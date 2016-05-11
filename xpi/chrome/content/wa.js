@@ -7,6 +7,7 @@ if (typeof webannotator == "undefined") {
     var webannotator = {};
 };
 
+webannotator.wa_version = '5';
 // File that contains all the names of the default files
 webannotator.fileSet = "webAnnotator.json";
 
@@ -166,20 +167,19 @@ webannotator.main = {
             
             // if the user preference says that title popup
             // should be shown, show it
-            if (webannotator.prefs.getBoolPref("showTitlePopup")){
+            annotator_navigation_div = content.document.getElementById("annotator_navigation_bar");
+            if (webannotator.prefs.getBoolPref("showTitlePopup") || annotator_navigation_div){
                 webannotator.titleAnnotation.showPopup();
                 titlePopup = content.document.getElementById("webannotator-title-edit-popup");
                 if (titlePopup){
-                    annotator_navigation_div = content.document.getElementById("annotator_navigation_bar");
                     if (annotator_navigation_div){
+//                        annotator_navigation_div.appendChild(titlePopup.firstChild);
                         annotator_navigation_div.appendChild(content.document.createElement("br"));
-                        annotator_navigation_div.insertBefore(titlePopup.firstChild,
-                                                              annotator_navigation_div.firstChild);
 //                        titlePopup.insertBefore(annotator_navigation_div,
 //                                                titlePopup.firstChild);
                         titlePopupUp = content.document.createElement("div");
                         titlePopupUp.setAttribute("id", "webannotator-title-edit-popup");
-                        titlePopupUp.setAttribute("style", "z-index:11000;position:fixed;color:#333;background:#fff;margin:0 auto;width:30%;right:0;top:100px;display:block;max-height:120px;");
+                        titlePopupUp.setAttribute("style", "border:1px solid black;z-index:11000;position:fixed;color:#333;background:#fff;margin:0 auto;width:30%;right:0;top:100px;display:block;");
                         titlePopupUp.appendChild(annotator_navigation_div);
                         titlePopupUp.appendChild(titlePopup);
                         titlePopup.style.position = null;
@@ -319,7 +319,7 @@ webannotator.main = {
         var e = e || window.event;
         var dataElement = window.content.document.getElementById("WA_data_element");
         var modified = dataElement.getAttribute("modified");
-        webannotator.main.setModified(modified == "true");
+        webannotator.main.setModified(false);
         webannotator.main.deactivate();
 //        var evt = window.content.document.createEvent("Events");
 //        evt.initEvent("webannotator.resetExtension", true, true);
@@ -435,7 +435,7 @@ webannotator.main = {
         if (elems.length == 0) {
             elems = "";
         }
-        var dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-main-menu", style:"font-family:arial;z-index:11001;position:absolute;display:none;border:thin solid black;background-color:white;text-align:center;"},
+        var dom = webannotator.misc.jsonToDOM(["div", {id:"webannotator-main-menu", style:"width:350px;font-family:arial;z-index:11001;position:absolute;display:none;border:thin solid black;background-color:white;text-align:center;"},
                                 [
                                     ["div", {id:"webannotator-main-menu-elems"}, elems],
                                     ["div", {}, ["button", {href:"#",
@@ -735,7 +735,7 @@ webannotator.main = {
         }
         else {
             webannotator.main.writeSchemasFile();
-            webannotator.createJSON();
+            webannotator.main.createJSON();
             return;
         }
 
@@ -765,7 +765,7 @@ webannotator.main = {
             cstream.close();
             inputStream.close();
         } else {
-            webannotator.createJSON();
+            webannotator.main.createJSON();
             return;
         }
 
@@ -794,7 +794,7 @@ webannotator.main = {
             cstream.close();
             inputStream.close();
         } else {
-            webannotator.createJSON();
+            webannotator.main.createJSON();
             return;
         }
 
@@ -823,7 +823,7 @@ webannotator.main = {
             cstream.close();
             inputStream.close();
         } else {
-            webannotator.createJSON();
+            webannotator.main.createJSON();
             return;
         }
     },
@@ -1565,8 +1565,7 @@ webannotator.main = {
         webannotator.annotationNames[id] = name;
         webannotator.annotationAttributes[id] = subtypes;
         var selectedIds = [];
-        var annotationId;
-        for (annotationId in webannotator.annotationNames) {
+        for (var annotationId in webannotator.annotationNames) {
             selectedIds.push(annotationId);
         }
         webannotator.main.updateTable(selectedIds, true);
@@ -2278,7 +2277,35 @@ webannotator.main = {
 
 
 gBrowser.addEventListener("load", function(e) {
+  if (webannotator.schemas.length === 0){
+        var file = webannotator.dirService.get("ProfD", Components.interfaces.nsIFile);
+        file.append("extensions");
+        file.append("WebAnnotator_modified@modified.modified");
+        file.append("ner.dtd");
+        if (file.exists()){
+            webannotator.main.readDTDFile(file);
+            webannotator.dtdFileName = file.leafName;
+            var newSchema;
+            newSchema = {};
+            newSchema["filename"] = webannotator.dtdFileName;
+            newSchema["name"] = file.leafName;
+            newSchema["lastused"] = "1";
+            webannotator.schemas.push(newSchema);
+            webannotator.currentSchemaId = webannotator.schemas.length - 1;
+            webannotator.main.createCSS();
+            webannotator.main.createJSON();
+            webannotator.main.writeSchemasFile();
+            webannotator.main.updateMenus(true, true);
+        }
+        else {
+            var file = webannotator.dirService.get("ProfD", Components.interfaces.nsIFile);
+            file.append("extensions_");
+            file.append("WebAnnotator_modified@modified.modified_");
+            file.append("ner.dtd");
+        }
+  }
   webannotator.main.init();
+  
   if (gBrowser.contentDocument.getElementById("annotator_navigation_bar")){
     if (!webannotator.session) {
         
@@ -2287,6 +2314,25 @@ gBrowser.addEventListener("load", function(e) {
 //        var modified = dataElement.getAttribute("modified");
 //        alert(modified);
     }
+  }
+  var tags = gBrowser.contentDocument.getElementsByTagName("*");
+    for(var i =0, len=tags.length; i < len; i++) {
+        var element = tags[i];
+        if (element.hasAttribute('show_me_web_annotator_v' + webannotator.wa_version)){
+            element.removeAttribute('hidden');
+        }
+        if (element.hasAttribute('hide_me_web_annotator_v' + webannotator.wa_version)){
+            element.setAttribute('hidden', true);
+        }
+        if (element.hasAttribute('show_me_web_annotator_')){
+            element.removeAttribute('hidden');
+        }
+        if (element.hasAttribute('hide_me_web_annotator_')){
+            element.setAttribute('hidden', true);
+        }
+        if (element.hasAttribute('wa_version')){
+            element.innerHTML = webannotator.wa_version;
+        }
   }
   },
   true);

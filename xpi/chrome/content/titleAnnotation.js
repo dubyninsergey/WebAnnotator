@@ -68,8 +68,9 @@ webannotator.titleAnnotation = {
         var titlePopupMoverAtts = {
            id: "webannotator-title-edit-mover-popup",
            type: "button",
+           class: "myButton",
            value: "Move",
-           style: "left:0;top:0;padding:0;",
+           style: "left:0;top:0;padding:0;margin-right:10px",
 		   onclick:function(e) {
 			    var title = content.document.getElementById("webannotator-title-edit-popup");
 			    var position = title.style.position;

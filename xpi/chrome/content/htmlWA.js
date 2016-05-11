@@ -185,6 +185,7 @@ webannotator.htmlWA = {
 
             // Update info in bottom panel
             webannotator.main.receiveEditAnnotation(webannotator.htmlWA.getIdToEdit(), sectionName, subtypes);
+            webannotator.htmlWA.resetAttributesOption();
 
             // Reset id to edit
             webannotator.htmlWA.setIdToEdit(null);
@@ -223,6 +224,7 @@ webannotator.htmlWA = {
 
             // Update the bottom panel
             webannotator.main.receiveNewAnnotation(webannotator.WAid, sectionName, webannotator.aSelection.text, subtypes);
+            webannotator.htmlWA.resetAttributesOption();
 
             //For find same text on page and create SUGGEST annotations
             selected_text = webannotator.aSelection.text;
@@ -244,7 +246,9 @@ webannotator.htmlWA = {
                         suggestParent["type"] = sectionName
                         suggestParent["subtypes"] = subtypes
                     }
-                    webannotator.htmlWA.action("SUGGEST", suggestParent);
+                    if (suggestParent["type"] !== 'ADDR_HOUSE'){
+                        webannotator.htmlWA.action("SUGGEST", suggestParent);
+                    }
                 }
             }
         }
@@ -582,14 +586,16 @@ webannotator.htmlWA = {
                 var toRemove = [];
                 var toPush = {};
                 var element = links[i];
-                var attrs = element.attributes;
-                var attrName; var length = attrs.length;
-                for (var attr, j = 0 ; j < length; j++){
-                    attr = attrs.item(j);
-                    attrName = attr.nodeName.toLowerCase();
-                    if ((element.nodeName.toLowerCase() === "a" && attrName.toLowerCase() === "href") || (attrName.startsWith("on")) || (attrName.startsWith("ajaxify"))) {
-                        toRemove.push(attrName);
-                        toPush[wa_prefix + attrName] = element.getAttribute(attrName);
+                if (!element.hasAttribute('_annotator_server')){
+                    var attrs = element.attributes;
+                    var attrName; var length = attrs.length;
+                    for (var attr, j = 0 ; j < length; j++){
+                        attr = attrs.item(j);
+                        attrName = attr.nodeName.toLowerCase();
+                        if ((element.nodeName.toLowerCase() === "a" && attrName.toLowerCase() === "href") || (attrName.startsWith("on")) || (attrName.startsWith("ajaxify"))) {
+                            toRemove.push(attrName);
+                            toPush[wa_prefix + attrName] = element.getAttribute(attrName);
+                        }
                     }
                 }
                 for (var attrName in toRemove) {
