@@ -69,6 +69,7 @@ webannotator.popups = {
         var mouseY = evt.clientY;
         var left = mouseX + scrollX + webannotator.distX + webannotator.userShiftX;
         var top = mouseY + scrollY + webannotator.distY + webannotator.userShiftY;
+        
 
         if (left < 0) {
             left = 0;
@@ -86,6 +87,12 @@ webannotator.popups = {
 
         //alert(windowHeight + " " + mouseY + " " + scrollY + " " + popupHeight + " " + distY + " -> " + top);
 
+        if (popup.id == "webannotator-sec-menu"){
+            
+            left = mouseX + scrollX - 30;
+            top = mouseY + scrollY - popupHeight + 15;
+        }
+        
         popup.style.left = left + "px";
         popup.style.top = top + "px";
     }

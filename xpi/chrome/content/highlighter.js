@@ -127,6 +127,7 @@ var sbHighlighter = {
         {
             newNode.setAttribute( attr, aAttributes[attr] );
         }
+        newNode.addEventListener("click", webannotator.htmlWA.receiveWindowEditAnnotation);
         newNode.addEventListener("mouseover", webannotator.main.showEdit);
         newNode.addEventListener("mouseout", webannotator.main.hideEdit);
         return newNode;

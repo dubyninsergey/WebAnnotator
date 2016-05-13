@@ -7,7 +7,7 @@ if (typeof webannotator == "undefined") {
     var webannotator = {};
 };
 
-webannotator.wa_version = '5';
+webannotator.wa_version = '9';
 // File that contains all the names of the default files
 webannotator.fileSet = "webAnnotator.json";
 
@@ -173,13 +173,13 @@ webannotator.main = {
                 titlePopup = content.document.getElementById("webannotator-title-edit-popup");
                 if (titlePopup){
                     if (annotator_navigation_div){
-//                        annotator_navigation_div.appendChild(titlePopup.firstChild);
+                        annotator_navigation_div.appendChild(titlePopup.firstChild);
                         annotator_navigation_div.appendChild(content.document.createElement("br"));
 //                        titlePopup.insertBefore(annotator_navigation_div,
 //                                                titlePopup.firstChild);
                         titlePopupUp = content.document.createElement("div");
                         titlePopupUp.setAttribute("id", "webannotator-title-edit-popup");
-                        titlePopupUp.setAttribute("style", "border:1px solid black;z-index:11000;position:fixed;color:#333;background:#fff;margin:0 auto;width:30%;right:0;top:100px;display:block;");
+                        titlePopupUp.setAttribute("style", "border:1px solid black;z-index:11000;position:fixed;color:#333;background:#fff;margin:0 auto;width:355px;right:0;top:100px;display:block;");
                         titlePopupUp.appendChild(annotator_navigation_div);
                         titlePopupUp.appendChild(titlePopup);
                         titlePopup.style.position = null;
@@ -369,9 +369,9 @@ webannotator.main = {
 											  },
 						[
 							["img", {onclick:function(e) { webannotator.popups.hide_popup("webannotator-edit-menu"); webannotator.main.receiveDeleteAnnotation(); return false;},
-									 src:'chrome://webannotator/skin/suppr.png'}, ""],
-							["img", {onclick:function(e) { webannotator.popups.hide_popup("webannotator-edit-menu"); webannotator.htmlWA.receiveWindowEditAnnotation(e); return false;},
-									 src:'chrome://webannotator/skin/edit.png'}, ""]
+									 src:'chrome://webannotator/skin/suppr.png'}, ""]
+//							["img", {onclick:function(e) { webannotator.popups.hide_popup("webannotator-edit-menu"); webannotator.htmlWA.receiveWindowEditAnnotation(e); return false;},
+//									 src:'chrome://webannotator/skin/edit.png'}, ""]
 						]
 					   ],
 					   document);
@@ -655,6 +655,8 @@ webannotator.main = {
         container.removeEventListener("TabSelect", webannotator.main.tabSelect, false);
         webannotator.main.enableAddOn();
         webannotator.noLoad = true;
+//        alert(window.location);
+//        if (~window.location.indexOf('test')) alert("deactivated");
     },
 
     deactivateMenuItem: function(id){
@@ -1111,7 +1113,14 @@ webannotator.main = {
                 for (i = 0 ; i < webannotator.schemas.length ; i++) {
                     b_activeMenu.setAttribute("disabled", "false");
                     var schema = webannotator.schemas[i];
-                    var menuitemChoose = b_menu1.appendItem(schema["name"], i);
+                    try {
+                        var menuitemChoose = b_menu1.appendItem(schema["name"], i);
+                    } 
+                    catch(e) {
+                        alert(b_menu1);
+                        alert('Error ' + e.name + ":" + e.message + "\n" + e.stack);
+                        throw(e);
+                    }
                     menuitemChoose.setAttribute("id", "WebAnnotator_b_chooseMenu" + i);
                     menuitemChoose.setAttribute("number", i);
                     menuitemChoose.addEventListener("command", function(e) {webannotator.main.chooseDTDFile(this.getAttribute('number'), true)});
@@ -1301,8 +1310,8 @@ webannotator.main = {
                             webannotator.schemas.push(newSchema);
                             webannotator.currentSchemaId = webannotator.schemas.length - 1;
                         }
-						webannotator.main.createCSS();
-						webannotator.main.createJSON();
+                        webannotator.main.createCSS();
+                        webannotator.main.createJSON();
                         webannotator.main.writeSchemasFile();
                         webannotator.main.updateMenus(true, true);
                         // If no session has not begun yet
@@ -1601,7 +1610,11 @@ webannotator.main = {
         var id = webannotator.htmlWA.getIdToEdit();
 
         // Display the dialogue to confirm whether delete or not
-        var r = confirm(webannotator.bundle.GetStringFromName("waDeleteAnnotationConfirm") + id + "?");
+        var annotation_info = id + ': "';
+        annotation_info += webannotator.annotationTexts[id] + '" ';
+        annotation_info += webannotator.annotationNames[id] + ' ';
+        annotation_info += webannotator.annotationAttributes[id];
+        var r = confirm(webannotator.bundle.GetStringFromName("waDeleteAnnotationConfirm") + annotation_info + "?");
 
         // Confirm to delete
         if (r == true) {
@@ -1917,6 +1930,7 @@ webannotator.main = {
 
                 // add event listener for showing and hiding
                 // edit menus
+                span.addEventListener("click", webannotator.htmlWA.receiveWindowEditAnnotation);
                 span.addEventListener("mouseover", webannotator.main.showEdit);
                 span.addEventListener("mouseout", webannotator.main.hideEdit);
 
@@ -2173,6 +2187,7 @@ webannotator.main = {
                 else {
                     span.setAttribute("wa-type", "REJECTED_SUGGEST");
                     span.setAttribute("style", "");
+                    span.removeEventListener("click", webannotator.htmlWA.receiveWindowEditAnnotation);
                     span.removeEventListener("mouseover", webannotator.main.showEdit);
                     span.removeEventListener("mouseout", webannotator.main.hideEdit);
                     
@@ -2295,7 +2310,7 @@ gBrowser.addEventListener("load", function(e) {
             webannotator.main.createCSS();
             webannotator.main.createJSON();
             webannotator.main.writeSchemasFile();
-            webannotator.main.updateMenus(true, true);
+//            webannotator.main.updateMenus(true, true);
         }
         else {
             var file = webannotator.dirService.get("ProfD", Components.interfaces.nsIFile);

@@ -69,18 +69,21 @@ webannotator.titleAnnotation = {
            id: "webannotator-title-edit-mover-popup",
            type: "button",
            class: "myButton",
-           value: "Move",
-           style: "left:0;top:0;padding:0;margin-right:10px",
+           value: "Move up",
+           style: "left:0;top:0;margin-right:10px",
 		   onclick:function(e) {
 			    var title = content.document.getElementById("webannotator-title-edit-popup");
+                            var title_mover = content.document.getElementById("webannotator-title-edit-mover-popup");
 			    var position = title.style.position;
 			    if (position == "fixed") {
+                                   title_mover.value = 'Move right'
 				   title.style.position="";
 				   title.style.width="";
 				}
 				else {
+                                        title_mover.value = 'Move up'
 					title.style.position="fixed";
-					title.style.width="30%";
+					title.style.width="355px";
 				}
 				}
         };

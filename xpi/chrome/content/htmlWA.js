@@ -228,9 +228,13 @@ webannotator.htmlWA = {
 
             //For find same text on page and create SUGGEST annotations
             selected_text = webannotator.aSelection.text;
+
             new_annotation = true;
 
         }
+//        else {
+//            alert("empty text");
+//        }
         // Close edit menu
         webannotator.htmlWA.closeMenu();
         // Annotate all same text as SUGGEST
@@ -258,6 +262,7 @@ webannotator.htmlWA = {
      * Finds and selects first occurence of text in the body
      */
     selectText: function(text) {
+        text = text.toLowerCase();
         if (content.document.createNodeIterator && content.document.createTreeWalker){
             elems = content.document.createNodeIterator(
                 content.document.body,
@@ -266,8 +271,8 @@ webannotator.htmlWA = {
                 false
                 );
             while((elem = elems.nextNode()) != null){
-                var value = elem.textContent;
-                if (~value.indexOf(text) && !elem.parentNode.hasAttribute("WA-id")) {
+                var value = elem.textContent.toLowerCase();
+                if (~value.indexOf(text) && !elem.parentNode.hasAttribute("WA-id") && elem.parentNode.nodeName !== 'TITLE') {
                     if (content.document.createRange) {
                         var rng = content.document.createRange();
                         rng.setStart(elem, value.indexOf(text));
